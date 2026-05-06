@@ -85,7 +85,12 @@ public class AssignmentSolver {
                 Student student = candidate.getStudent();
                 int studentNode = studentNodeMap.get(student);
 
-                flowSolver.addEdge(thankableNode, studentNode, 1, 0);
+                flowSolver.addEdge(
+                        thankableNode,
+                        studentNode,
+                        1,
+                        candidate.getCost()
+                );
                 candidateLookup.put(key(thankableNode, studentNode), candidate);
             }
         }
@@ -109,7 +114,9 @@ public class AssignmentSolver {
                         assignments.add(new Assignment(
                                 student,
                                 thankable,
-                                String.join(", ", candidate.getReasons())
+                                String.join(", ", candidate.getReasons()),
+                                candidate.isRedAlert(),
+                                candidate.getAlertMessage()
                         ));
 
                         matchedThankables.add(thankable);

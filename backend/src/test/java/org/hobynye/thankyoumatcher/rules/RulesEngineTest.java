@@ -36,7 +36,12 @@ class RuleEngineTest {
 
         Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.getReasons()).contains("School mismatch");
+        assertThat(result.isRedAlert()).isTrue();
+        assertThat(result.getCost()).isGreaterThan(0);
+        assertThat(result.getReasons()).contains("Fallback assignment for earmarked sponsorship");
+        assertThat(result.getAlertMessage()).contains("RED ALERT");
+        assertThat(result.getAlertMessage()).contains("Other High School");
+        assertThat(result.getAlertMessage()).contains("Beacon High School");
     }
 
     @Test
@@ -68,6 +73,8 @@ class RuleEngineTest {
 
         Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.getReasons()).contains("Staff color/group mismatch");
+        assertThat(result.isRedAlert()).isFalse();
+        assertThat(result.getCost()).isGreaterThan(0);
+        assertThat(result.getReasons()).contains("Fallback staff match: same color only");
     }
 }
