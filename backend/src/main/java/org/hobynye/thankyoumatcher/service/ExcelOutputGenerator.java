@@ -46,11 +46,15 @@ public class ExcelOutputGenerator {
 
         Row header = sheet.createRow(0);
         createHeader(header, 0, output.getStudentName());
-        createHeader(header, 1, output.getDonorOrg());
-        createHeader(header, 2, output.getDonorName());
-        createHeader(header, 3, output.getDonorAddress());
-        createHeader(header, 4, output.getDonation());
-        createHeader(header, 5, output.getReason());
+        createHeader(header, 1, "studentColor");
+        createHeader(header, 2, "studentGroup");
+        createHeader(header, 3, output.getDonorOrg());
+        createHeader(header, 4, output.getDonorName());
+        createHeader(header, 5, output.getDonorAddress());
+        createHeader(header, 6, output.getDonation());
+        createHeader(header, 7, output.getReason());
+        createHeader(header, 8, "redAlert");
+        createHeader(header, 9, "alertMessage");
 
         int rowIndex = 1;
 
@@ -61,14 +65,18 @@ public class ExcelOutputGenerator {
             Thankable thankable = assignment.getThankable();
 
             row.createCell(0).setCellValue(studentName(student));
-            row.createCell(1).setCellValue(value(thankable.getOrgName()));
-            row.createCell(2).setCellValue(value(thankable.getContactName()));
-            row.createCell(3).setCellValue(value(thankable.getAddress()));
-            row.createCell(4).setCellValue(value(thankable.getDescription()));
-            row.createCell(5).setCellValue(value(assignment.getReason()));
+            row.createCell(1).setCellValue(value(student.getColor()));
+            row.createCell(2).setCellValue(value(student.getGroup()));
+            row.createCell(3).setCellValue(value(thankable.getOrgName()));
+            row.createCell(4).setCellValue(value(thankable.getContactName()));
+            row.createCell(5).setCellValue(value(thankable.getAddress()));
+            row.createCell(6).setCellValue(value(thankable.getDescription()));
+            row.createCell(7).setCellValue(value(assignment.getReason()));
+            row.createCell(8).setCellValue(assignment.isRedAlert() ? "YES" : "NO");
+            row.createCell(9).setCellValue(value(assignment.getAlertMessage()));
         }
 
-        autoSize(sheet, 6);
+        autoSize(sheet, 10);
     }
 
     private void createJuniorStaffSheet(

@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ExcelOutputGeneratorTest {
 
     private final ExcelOutputGenerator generator = new ExcelOutputGenerator();
@@ -22,6 +20,8 @@ class ExcelOutputGeneratorTest {
         Student student = new Student();
         student.setFirstName("Amanda");
         student.setLastName("Smith");
+        student.setColor("Red");
+        student.setGroup("A");
 
         Thankable donor = thankable("D1");
         Assignment assignment = new Assignment(student, donor, "Matched earmark");
@@ -55,7 +55,31 @@ class ExcelOutputGeneratorTest {
                     .isEqualTo("Amanda Smith");
 
             Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(1).getStringCellValue())
+                    .isEqualTo("Red");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(2).getStringCellValue())
+                    .isEqualTo("A");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(3).getStringCellValue())
                     .isEqualTo("Org D1");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(4).getStringCellValue())
+                    .isEqualTo("Contact D1");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(5).getStringCellValue())
+                    .isEqualTo("123 Main Street");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(6).getStringCellValue())
+                    .isEqualTo("Monetary donation of $100");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(7).getStringCellValue())
+                    .isEqualTo("Matched earmark");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(8).getStringCellValue())
+                    .isEqualTo("NO");
+
+            Assertions.assertThat(workbook.getSheet("Assignments").getRow(1).getCell(9).getStringCellValue())
+                    .isEqualTo("");
 
             Assertions.assertThat(workbook.getSheet("Junior Staff Assignments").getRow(1).getCell(0).getStringCellValue())
                     .isEqualTo("Junior Staff Member");
