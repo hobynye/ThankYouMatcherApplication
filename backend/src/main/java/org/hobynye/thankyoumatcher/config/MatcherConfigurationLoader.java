@@ -97,7 +97,10 @@ public class MatcherConfigurationLoader {
     private void validateDonationColumns(DonationColumnConfiguration donation) {
         require(donation.getOrganization(), "columns.donation.organization");
         require(donation.getContactName(), "columns.donation.contactName");
-        require(donation.getAddress(), "columns.donation.address");
+        require(donation.getStreet(), "columns.donation.street");
+        require(donation.getCity(), "columns.donation.city");
+        require(donation.getState(), "columns.donation.state");
+        require(donation.getZip(), "columns.donation.zip");
         require(donation.getEarmarkedDonation(), "columns.donation.earmarkedDonation");
         require(donation.getSponsoredSchool(), "columns.donation.sponsoredSchool");
         require(donation.getSponsoredCounty(), "columns.donation.sponsoredCounty");

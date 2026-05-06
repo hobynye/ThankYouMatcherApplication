@@ -85,13 +85,57 @@ public class ExcelUtils {
         }
 
         DataFormatter formatter = new DataFormatter();
-        String value = formatter.formatCellValue(cell);
+
+        String value;
+
+        if (cell.getCellType() == CellType.FORMULA) {
+            value = readFormulaCellAsString(cell, formatter);
+        } else {
+            value = formatter.formatCellValue(cell);
+        }
 
         if (value == null || value.isBlank()) {
             return null;
         }
 
         return value.trim();
+    }
+
+    private static String readFormulaCellAsString(Cell cell, DataFormatter formatter) {
+        try {
+            CellType cachedType = cell.getCachedFormulaResultType();
+
+            return switch (cachedType) {
+                case STRING -> cell.getStringCellValue();
+                case NUMERIC -> formatter.formatCellValue(cell);
+                case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+                case BLANK -> null;
+                default -> extractFallbackFormulaValue(cell.getCellFormula());
+            };
+
+        } catch (Exception e) {
+            return extractFallbackFormulaValue(cell.getCellFormula());
+        }
+    }
+
+    private static String extractFallbackFormulaValue(String formula) {
+        if (formula == null) {
+            return null;
+        }
+
+        // Handles formulas like:
+        // IFERROR(__xludf.DUMMYFUNCTION("""COMPUTED_VALUE"""),"Emma")
+        int lastQuote = formula.lastIndexOf('"');
+        if (lastQuote <= 0) {
+            return formula;
+        }
+
+        int previousQuote = formula.lastIndexOf('"', lastQuote - 1);
+        if (previousQuote < 0) {
+            return formula;
+        }
+
+        return formula.substring(previousQuote + 1, lastQuote);
     }
 
     public static boolean isBlankRow(Row row) {

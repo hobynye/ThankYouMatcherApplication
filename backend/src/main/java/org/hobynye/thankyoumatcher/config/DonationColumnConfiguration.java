@@ -7,7 +7,10 @@ public class DonationColumnConfiguration {
 
     private String organization;
     private String contactName;
-    private String address;
+    private String street;
+    private String city;
+    private String state;
+    private String zip;
     private String amount;
     private String description;
 

@@ -20,9 +20,30 @@ class MatcherConfigurationLoaderTest {
         MatcherConfiguration config = loader.load(stream(validJson()));
 
         assertThat(config.getFiles().getIncomeFile()).isEqualTo("2026 Income.xlsx");
+
         assertThat(config.getSheets().getDonations()).isEqualTo("Donations");
+        assertThat(config.getSheets().getGiftInKind()).isEqualTo("Gift in Kind");
+        assertThat(config.getSheets().getGiftCards()).isEqualTo("Gift Cards");
+        assertThat(config.getSheets().getStaff()).isEqualTo("Staff");
+        assertThat(config.getSheets().getSpeakers()).isEqualTo("Speakers");
+        assertThat(config.getSheets().getStudents()).isEqualTo("Students");
+
         assertThat(config.getColumns().getStudent().getFirstName()).isEqualTo("First Name");
+        assertThat(config.getColumns().getStudent().getLastName()).isEqualTo("Last Name");
+        assertThat(config.getColumns().getStudent().getSchoolName()).isEqualTo("School Name");
+
+        assertThat(config.getColumns().getDonation().getOrganization()).isEqualTo("Organization");
+        assertThat(config.getColumns().getDonation().getContactName()).isEqualTo("Name");
+        assertThat(config.getColumns().getDonation().getStreet()).isEqualTo("Street");
+        assertThat(config.getColumns().getDonation().getCity()).isEqualTo("City");
+        assertThat(config.getColumns().getDonation().getState()).isEqualTo("State");
+        assertThat(config.getColumns().getDonation().getZip()).isEqualTo("Zip");
+
         assertThat(config.getRules().getMinimumThankYousPerStudent()).isEqualTo(2);
+        assertThat(config.getRules().isBalanceAssignments()).isTrue();
+
+        assertThat(config.getOutput().getStudentName()).isEqualTo("studentName");
+        assertThat(config.getOutput().getDonorOrg()).isEqualTo("donorOrg");
     }
 
     @Test
@@ -54,7 +75,10 @@ class MatcherConfigurationLoaderTest {
                     "donation": {
                       "organization": "Organization",
                       "contactName": "Name",
-                      "address": "Address",
+                      "street": "Street",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
                       "earmarkedDonation": "Earmarked Donation?",
                       "sponsoredSchool": "Sponsored School",
                       "sponsoredCounty": "Sponsored County",
@@ -68,8 +92,14 @@ class MatcherConfigurationLoaderTest {
 
         assertThat(config.getRules()).isNotNull();
         assertThat(config.getRules().getMinimumThankYousPerStudent()).isEqualTo(2);
+
         assertThat(config.getOutput()).isNotNull();
         assertThat(config.getOutput().getStudentName()).isEqualTo("studentName");
+        assertThat(config.getOutput().getDonorOrg()).isEqualTo("donorOrg");
+        assertThat(config.getOutput().getDonorName()).isEqualTo("donorName");
+        assertThat(config.getOutput().getDonorAddress()).isEqualTo("donorAddress");
+        assertThat(config.getOutput().getDonation()).isEqualTo("donation");
+        assertThat(config.getOutput().getReason()).isEqualTo("reason");
     }
 
     @Test
@@ -83,7 +113,10 @@ class MatcherConfigurationLoaderTest {
                     "donation": {
                       "organization": "Organization",
                       "contactName": "Name",
-                      "address": "Address",
+                      "street": "Street",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
                       "earmarkedDonation": "Earmarked Donation?",
                       "sponsoredSchool": "Sponsored School",
                       "sponsoredCounty": "Sponsored County",
@@ -122,6 +155,40 @@ class MatcherConfigurationLoaderTest {
                 .hasMessageContaining("columns.donation.organization");
     }
 
+    @Test
+    void throwsWhenStreetMissing() {
+        String json = """
+                {
+                  "files": {},
+                  "sheets": {},
+                  "columns": {
+                    "student": {
+                      "firstName": "First Name",
+                      "lastName": "Last Name",
+                      "schoolName": "School Name",
+                      "color": "Color",
+                      "group": "Group"
+                    },
+                    "donation": {
+                      "organization": "Organization",
+                      "contactName": "Name",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
+                      "earmarkedDonation": "Earmarked Donation?",
+                      "sponsoredSchool": "Sponsored School",
+                      "sponsoredCounty": "Sponsored County",
+                      "sponsoredJStaff": "Sponsored JStaff"
+                    }
+                  }
+                }
+                """;
+
+        assertThatThrownBy(() -> loader.load(stream(json)))
+                .isInstanceOf(ConfigurationLoadException.class)
+                .hasMessageContaining("columns.donation.street");
+    }
+
     private ByteArrayInputStream stream(String json) {
         return new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     }
@@ -154,7 +221,10 @@ class MatcherConfigurationLoaderTest {
                     "donation": {
                       "organization": "Organization",
                       "contactName": "Name",
-                      "address": "Address",
+                      "street": "Street",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
                       "amount": "Amount",
                       "description": "Description",
                       "earmarkedDonation": "Earmarked Donation?",
@@ -162,6 +232,31 @@ class MatcherConfigurationLoaderTest {
                       "sponsoredCounty": "Sponsored County",
                       "sponsoredJStaff": "Sponsored JStaff",
                       "sponsoredStudent": "Sponsored Student",
+                      "weight": "Weight"
+                    },
+                    "staff": {
+                      "firstName": "First Name",
+                      "lastName": "Last Name",
+                      "organization": "Organization",
+                      "street": "Street",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
+                      "color": "Color",
+                      "group": "Group",
+                      "role": "Role",
+                      "weight": "Weight"
+                    },
+                    "speaker": {
+                      "firstName": "First Name",
+                      "lastName": "Last Name",
+                      "organization": "Organization",
+                      "street": "Street",
+                      "city": "City",
+                      "state": "State",
+                      "zip": "Zip",
+                      "topic": "Topic",
+                      "description": "Description",
                       "weight": "Weight"
                     }
                   },

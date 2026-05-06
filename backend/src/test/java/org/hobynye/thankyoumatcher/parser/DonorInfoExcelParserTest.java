@@ -27,11 +27,11 @@ class DonorInfoExcelParserTest {
 
         assertThat(thankables).hasSize(3);
 
-        Thankable donation = thankables.get(0);
+        Thankable donation = thankables.getFirst();
         assertThat(donation.getType()).isEqualTo(ThankableType.DONATION);
         assertThat(donation.getOrgName()).isEqualTo("Beacon Company");
         assertThat(donation.getContactName()).isEqualTo("John Donor");
-        assertThat(donation.getAddress()).isEqualTo("123 Main Street");
+        assertThat(donation.getAddress()).isEqualTo("123 Main Street, Fishkill, NY 12524");
         assertThat(donation.isEarmarked()).isTrue();
         assertThat(donation.getSponsoredSchool()).isEqualTo("Beacon High School");
         assertThat(donation.getSponsoredCounty()).isEqualTo("Dutchess");
@@ -42,6 +42,7 @@ class DonorInfoExcelParserTest {
         Thankable staff = thankables.get(1);
         assertThat(staff.getType()).isEqualTo(ThankableType.STAFF);
         assertThat(staff.getContactName()).isEqualTo("Amanda Smith");
+        assertThat(staff.getAddress()).isEqualTo("456 Main Street, Beacon, NY 12508");
         assertThat(staff.getStaffColor()).isEqualTo("Red");
         assertThat(staff.getStaffGroup()).isEqualTo("A");
         assertThat(staff.getDescription()).isEqualTo("Red A Facilitator");
@@ -49,6 +50,7 @@ class DonorInfoExcelParserTest {
         Thankable speaker = thankables.get(2);
         assertThat(speaker.getType()).isEqualTo(ThankableType.SPEAKER);
         assertThat(speaker.getContactName()).isEqualTo("Tim Walshjamin");
+        assertThat(speaker.getAddress()).isEqualTo("789 Main Street, Poughkeepsie, NY 12601");
         assertThat(speaker.getDescription()).isEqualTo("Speaker: Leadership");
     }
 
@@ -58,7 +60,7 @@ class DonorInfoExcelParserTest {
 
         Sheet donations = workbook.getSheet("Donations");
         Row row = donations.getRow(1);
-        row.getCell(9).setCellValue("bad-weight");
+        row.getCell(12).setCellValue("bad-weight");
 
         assertThatThrownBy(() -> parser.parse(workbook, configuration()))
                 .isInstanceOf(ExcelParsingException.class)
@@ -81,25 +83,31 @@ class DonorInfoExcelParserTest {
         Row header = sheet.createRow(0);
         header.createCell(0).setCellValue("Organization");
         header.createCell(1).setCellValue("Name");
-        header.createCell(2).setCellValue("Address");
-        header.createCell(3).setCellValue("Amount");
-        header.createCell(4).setCellValue("Description");
-        header.createCell(5).setCellValue("Earmarked Donation?");
-        header.createCell(6).setCellValue("Sponsored School");
-        header.createCell(7).setCellValue("Sponsored County");
-        header.createCell(8).setCellValue("Sponsored JStaff");
-        header.createCell(9).setCellValue("Weight");
+        header.createCell(2).setCellValue("Street");
+        header.createCell(3).setCellValue("City");
+        header.createCell(4).setCellValue("State");
+        header.createCell(5).setCellValue("Zip");
+        header.createCell(6).setCellValue("Amount");
+        header.createCell(7).setCellValue("Description");
+        header.createCell(8).setCellValue("Earmarked Donation?");
+        header.createCell(9).setCellValue("Sponsored School");
+        header.createCell(10).setCellValue("Sponsored County");
+        header.createCell(11).setCellValue("Sponsored JStaff");
+        header.createCell(12).setCellValue("Weight");
 
         Row row = sheet.createRow(1);
         row.createCell(0).setCellValue("Beacon Company");
         row.createCell(1).setCellValue("John Donor");
         row.createCell(2).setCellValue("123 Main Street");
-        row.createCell(3).setCellValue(100);
-        row.createCell(5).setCellValue("Yes");
-        row.createCell(6).setCellValue("Beacon High School");
-        row.createCell(7).setCellValue("Dutchess");
-        row.createCell(8).setCellValue("Junior Staff");
-        row.createCell(9).setCellValue(2);
+        row.createCell(3).setCellValue("Fishkill");
+        row.createCell(4).setCellValue("NY");
+        row.createCell(5).setCellValue("12524");
+        row.createCell(6).setCellValue(100);
+        row.createCell(8).setCellValue("Yes");
+        row.createCell(9).setCellValue("Beacon High School");
+        row.createCell(10).setCellValue("Dutchess");
+        row.createCell(11).setCellValue("Junior Staff");
+        row.createCell(12).setCellValue(2);
     }
 
     private void createStaffSheet(Workbook workbook) {
@@ -109,21 +117,27 @@ class DonorInfoExcelParserTest {
         header.createCell(0).setCellValue("First Name");
         header.createCell(1).setCellValue("Last Name");
         header.createCell(2).setCellValue("Organization");
-        header.createCell(3).setCellValue("Address");
-        header.createCell(4).setCellValue("Color");
-        header.createCell(5).setCellValue("Group");
-        header.createCell(6).setCellValue("Role");
-        header.createCell(7).setCellValue("Weight");
+        header.createCell(3).setCellValue("Street");
+        header.createCell(4).setCellValue("City");
+        header.createCell(5).setCellValue("State");
+        header.createCell(6).setCellValue("Zip");
+        header.createCell(7).setCellValue("Color");
+        header.createCell(8).setCellValue("Group");
+        header.createCell(9).setCellValue("Role");
+        header.createCell(10).setCellValue("Weight");
 
         Row row = sheet.createRow(1);
         row.createCell(0).setCellValue("Amanda");
         row.createCell(1).setCellValue("Smith");
         row.createCell(2).setCellValue("HOBY NYE");
         row.createCell(3).setCellValue("456 Main Street");
-        row.createCell(4).setCellValue("Red");
-        row.createCell(5).setCellValue("A");
-        row.createCell(6).setCellValue("Facilitator");
-        row.createCell(7).setCellValue(1);
+        row.createCell(4).setCellValue("Beacon");
+        row.createCell(5).setCellValue("NY");
+        row.createCell(6).setCellValue("12508");
+        row.createCell(7).setCellValue("Red");
+        row.createCell(8).setCellValue("A");
+        row.createCell(9).setCellValue("Facilitator");
+        row.createCell(10).setCellValue(1);
     }
 
     private void createSpeakerSheet(Workbook workbook) {
@@ -133,18 +147,24 @@ class DonorInfoExcelParserTest {
         header.createCell(0).setCellValue("First Name");
         header.createCell(1).setCellValue("Last Name");
         header.createCell(2).setCellValue("Organization");
-        header.createCell(3).setCellValue("Address");
-        header.createCell(4).setCellValue("Topic");
-        header.createCell(5).setCellValue("Description");
-        header.createCell(6).setCellValue("Weight");
+        header.createCell(3).setCellValue("Street");
+        header.createCell(4).setCellValue("City");
+        header.createCell(5).setCellValue("State");
+        header.createCell(6).setCellValue("Zip");
+        header.createCell(7).setCellValue("Topic");
+        header.createCell(8).setCellValue("Description");
+        header.createCell(9).setCellValue("Weight");
 
         Row row = sheet.createRow(1);
         row.createCell(0).setCellValue("Tim");
         row.createCell(1).setCellValue("Walshjamin");
         row.createCell(2).setCellValue("Speaker Org");
         row.createCell(3).setCellValue("789 Main Street");
-        row.createCell(4).setCellValue("Leadership");
-        row.createCell(6).setCellValue(1);
+        row.createCell(4).setCellValue("Poughkeepsie");
+        row.createCell(5).setCellValue("NY");
+        row.createCell(6).setCellValue("12601");
+        row.createCell(7).setCellValue("Leadership");
+        row.createCell(9).setCellValue(1);
     }
 
     private MatcherConfiguration configuration() {
@@ -158,7 +178,10 @@ class DonorInfoExcelParserTest {
         DonationColumnConfiguration donation = new DonationColumnConfiguration();
         donation.setOrganization("Organization");
         donation.setContactName("Name");
-        donation.setAddress("Address");
+        donation.setStreet("Street");
+        donation.setCity("City");
+        donation.setState("State");
+        donation.setZip("Zip");
         donation.setAmount("Amount");
         donation.setDescription("Description");
         donation.setEarmarkedDonation("Earmarked Donation?");
@@ -171,7 +194,10 @@ class DonorInfoExcelParserTest {
         staff.setFirstName("First Name");
         staff.setLastName("Last Name");
         staff.setOrganization("Organization");
-        staff.setAddress("Address");
+        staff.setStreet("Street");
+        staff.setCity("City");
+        staff.setState("State");
+        staff.setZip("Zip");
         staff.setColor("Color");
         staff.setGroup("Group");
         staff.setRole("Role");
@@ -181,7 +207,10 @@ class DonorInfoExcelParserTest {
         speaker.setFirstName("First Name");
         speaker.setLastName("Last Name");
         speaker.setOrganization("Organization");
-        speaker.setAddress("Address");
+        speaker.setStreet("Street");
+        speaker.setCity("City");
+        speaker.setState("State");
+        speaker.setZip("Zip");
         speaker.setTopic("Topic");
         speaker.setDescription("Description");
         speaker.setWeight("Weight");

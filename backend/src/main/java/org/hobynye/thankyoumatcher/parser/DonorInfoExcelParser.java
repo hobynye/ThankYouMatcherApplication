@@ -58,7 +58,6 @@ public class DonorInfoExcelParser {
 
         int orgCol = ExcelUtils.requireColumn(headerMap, columns.getOrganization(), sheetName);
         int contactCol = ExcelUtils.requireColumn(headerMap, columns.getContactName(), sheetName);
-        int addressCol = ExcelUtils.requireColumn(headerMap, columns.getAddress(), sheetName);
         int earmarkedCol = ExcelUtils.requireColumn(headerMap, columns.getEarmarkedDonation(), sheetName);
         int schoolCol = ExcelUtils.requireColumn(headerMap, columns.getSponsoredSchool(), sheetName);
         int countyCol = ExcelUtils.requireColumn(headerMap, columns.getSponsoredCounty(), sheetName);
@@ -83,7 +82,15 @@ public class DonorInfoExcelParser {
 
             thankable.setOrgName(ExcelUtils.readString(row, orgCol));
             thankable.setContactName(ExcelUtils.readString(row, contactCol));
-            thankable.setAddress(ExcelUtils.readString(row, addressCol));
+            thankable.setAddress(readAddress(
+                    row,
+                    headerMap,
+                    sheetName,
+                    columns.getStreet(),
+                    columns.getCity(),
+                    columns.getState(),
+                    columns.getZip()
+            ));
 
             thankable.setEarmarked(readYesNo(row, earmarkedCol));
             thankable.setSponsoredSchool(ExcelUtils.readString(row, schoolCol));
@@ -118,7 +125,6 @@ public class DonorInfoExcelParser {
 
         int firstNameCol = ExcelUtils.requireColumn(headerMap, columns.getFirstName(), sheetName);
         int lastNameCol = ExcelUtils.requireColumn(headerMap, columns.getLastName(), sheetName);
-        int addressCol = ExcelUtils.requireColumn(headerMap, columns.getAddress(), sheetName);
         int colorCol = ExcelUtils.requireColumn(headerMap, columns.getColor(), sheetName);
         int groupCol = ExcelUtils.requireColumn(headerMap, columns.getGroup(), sheetName);
 
@@ -145,7 +151,15 @@ public class DonorInfoExcelParser {
 
             thankable.setContactName(joinName(firstName, lastName));
             thankable.setOrgName(orgCol == null ? null : ExcelUtils.readString(row, orgCol));
-            thankable.setAddress(ExcelUtils.readString(row, addressCol));
+            thankable.setAddress(readAddress(
+                    row,
+                    headerMap,
+                    sheetName,
+                    columns.getStreet(),
+                    columns.getCity(),
+                    columns.getState(),
+                    columns.getZip()
+            ));
 
             thankable.setStaffColor(ExcelUtils.readString(row, colorCol));
             thankable.setStaffGroup(ExcelUtils.readString(row, groupCol));
@@ -180,7 +194,6 @@ public class DonorInfoExcelParser {
 
         int firstNameCol = ExcelUtils.requireColumn(headerMap, columns.getFirstName(), sheetName);
         int lastNameCol = ExcelUtils.requireColumn(headerMap, columns.getLastName(), sheetName);
-        int addressCol = ExcelUtils.requireColumn(headerMap, columns.getAddress(), sheetName);
 
         Integer orgCol = optionalColumn(headerMap, columns.getOrganization());
         Integer topicCol = optionalColumn(headerMap, columns.getTopic());
@@ -207,7 +220,15 @@ public class DonorInfoExcelParser {
 
             thankable.setContactName(joinName(firstName, lastName));
             thankable.setOrgName(orgCol == null ? null : ExcelUtils.readString(row, orgCol));
-            thankable.setAddress(ExcelUtils.readString(row, addressCol));
+            thankable.setAddress(readAddress(
+                    row,
+                    headerMap,
+                    sheetName,
+                    columns.getStreet(),
+                    columns.getCity(),
+                    columns.getState(),
+                    columns.getZip()
+            ));
             thankable.setDescription(buildSpeakerDescription(topic, configuredDescription));
             thankable.setWeight(readWeight(row, weightCol));
 
@@ -327,5 +348,41 @@ public class DonorInfoExcelParser {
         }
 
         return firstName + " " + lastName;
+    }
+
+    private String readAddress(
+            Row row,
+            Map<String, Integer> headerMap,
+            String sheetName,
+            String street,
+            String city,
+            String state,
+            String zip
+    ) {
+        int streetCol = ExcelUtils.requireColumn(headerMap, street, sheetName);
+        int cityCol = ExcelUtils.requireColumn(headerMap, city, sheetName);
+        int stateCol = ExcelUtils.requireColumn(headerMap, state, sheetName);
+        int zipCol = ExcelUtils.requireColumn(headerMap, zip, sheetName);
+
+        String streetValue = ExcelUtils.readString(row, streetCol);
+        String cityValue = ExcelUtils.readString(row, cityCol);
+        String stateValue = ExcelUtils.readString(row, stateCol);
+        String zipValue = ExcelUtils.readString(row, zipCol);
+
+        String cityStateZip = joinNonBlank(" ", stateValue, zipValue);
+
+        return joinNonBlank(", ", streetValue, cityValue, cityStateZip);
+    }
+
+    private String joinNonBlank(String delimiter, String... values) {
+        List<String> parts = new ArrayList<>();
+
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                parts.add(value.trim());
+            }
+        }
+
+        return String.join(delimiter, parts);
     }
 }
