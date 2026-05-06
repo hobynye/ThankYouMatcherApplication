@@ -1,5 +1,6 @@
 package org.hobynye.thankyoumatcher.engine;
 
+import org.hobynye.thankyoumatcher.config.MatcherConfiguration;
 import org.hobynye.thankyoumatcher.model.*;
 import org.hobynye.thankyoumatcher.rules.RuleEngine;
 import org.hobynye.thankyoumatcher.solver.AssignmentSolver;
@@ -10,16 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 public class MatchingEngine {
-
-    private static final int MINIMUM_THANK_YOUS_PER_STUDENT = 2;
-
     private final RuleEngine ruleEngine = new RuleEngine();
     private final ThankableValidator thankableValidator = new ThankableValidator();
     private final MinimumThankYouProcessor minimumThankYouProcessor = new MinimumThankYouProcessor();
 
     public MatchingResult run(
             List<Student> students,
-            List<Thankable> thankables
+            List<Thankable> thankables,
+            MatcherConfiguration configuration
     ) {
         List<MatchingError> errors = new ArrayList<>();
 
@@ -48,7 +47,7 @@ public class MatchingEngine {
         errors.addAll(solverResult.getErrors());
         errors.addAll(minimumThankYouProcessor.validateMinimums(
                 students,
-                MINIMUM_THANK_YOUS_PER_STUDENT
+                configuration.getRules().getMinimumThankYousPerStudent()
         ));
 
         return new MatchingResult(
