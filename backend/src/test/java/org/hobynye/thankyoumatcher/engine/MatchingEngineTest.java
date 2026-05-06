@@ -1,5 +1,7 @@
 package org.hobynye.thankyoumatcher.engine;
 
+import org.hobynye.thankyoumatcher.config.MatcherConfiguration;
+import org.hobynye.thankyoumatcher.config.RuleConfiguration;
 import org.hobynye.thankyoumatcher.model.*;
 import org.junit.jupiter.api.Test;
 
@@ -20,12 +22,13 @@ class MatchingEngineTest {
 
         MatchingResult result = engine.run(
                 List.of(student),
-                List.of(thankable)
+                List.of(thankable),
+                configuration()
         );
 
         assertThat(result.getAssignments()).isEmpty();
         assertThat(result.getJuniorStaffAssignments()).hasSize(1);
-        assertThat(result.getJuniorStaffAssignments().get(0).getReason())
+        assertThat(result.getJuniorStaffAssignments().getFirst().getReason())
                 .contains("Junior Staff Member");
     }
 
@@ -39,7 +42,8 @@ class MatchingEngineTest {
 
         MatchingResult result = engine.run(
                 List.of(s1, s2),
-                List.of(thankable)
+                List.of(thankable),
+                configuration()
         );
 
         assertThat(result.getAssignments()).hasSize(2);
@@ -52,7 +56,8 @@ class MatchingEngineTest {
 
         MatchingResult result = engine.run(
                 List.of(student),
-                List.of(thankable)
+                List.of(thankable),
+                configuration()
         );
 
         assertThat(result.getErrors())
@@ -79,5 +84,16 @@ class MatchingEngineTest {
         thankable.setAddress("123 Main Street");
         thankable.setWeight(1);
         return thankable;
+    }
+
+    private MatcherConfiguration configuration() {
+        MatcherConfiguration configuration = new MatcherConfiguration();
+
+        RuleConfiguration rules = new RuleConfiguration();
+        rules.setMinimumThankYousPerStudent(2);
+
+        configuration.setRules(rules);
+
+        return configuration;
     }
 }

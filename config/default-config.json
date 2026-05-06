@@ -1,36 +1,72 @@
 {
   "files": {
-    "donorFile": "2026 Income.xlsx",
-    "studentFile": "students.xlsx"
+    "incomeFile": "2026 Income.xlsx",
+    "donorInfoFile": "DonorInfo.xlsx",
+    "studentFile": "StudentInfo.xlsx"
   },
   "sheets": {
     "donations": "Donations",
     "giftInKind": "Gift in Kind",
     "giftCards": "Gift Cards",
     "staff": "Staff",
-    "speakers": "Speakers"
+    "speakers": "Speakers",
+    "students": "Group Assignments"
   },
   "columns": {
     "student": {
       "firstName": "First Name",
       "lastName": "Last Name",
-      "school": "School Name",
+      "schoolName": "School Name",
+      "county": "County",
       "color": "Color",
       "group": "Group"
     },
     "donation": {
-      "orgName": "Organization",
-      "contactName": "Name",
+      "organization": "Donor Organization",
+      "contactName": "Donor Full Name",
       "address": "Address",
-      "earmarked": "Earmarked Donation?",
-      "school": "Sponsored School",
-      "county": "Sponsored County",
-      "jstaff": "Sponsored JStaff",
-      "amount": "Amount"
+      "amount": "Amount",
+      "description": "Description",
+      "earmarkedDonation": "Earmarked Donation?",
+      "sponsoredSchool": "Sponsored School",
+      "sponsoredCounty": "Sponsored County",
+      "sponsoredJStaff": "Sponsored JStaff",
+      "sponsoredStudent": "Sponsored Student",
+      "weight": "Weight"
+    },
+    "staff": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "organization": "Organization",
+      "address": "Address",
+      "color": "Color",
+      "group": "Group",
+      "role": "Role",
+      "weight": "Weight"
+    },
+    "speaker": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "organization": "Organization",
+      "address": "Address",
+      "topic": "Topic",
+      "description": "Description",
+      "weight": "Weight"
     }
   },
   "rules": {
-    "minThankYousPerStudent": 2,
-    "balanceAssignments": true
+    "minimumThankYousPerStudent": 2,
+    "balanceAssignments": true,
+    "strictStaffColorGroupMatch": true,
+    "strictSchoolSponsorshipMatch": true,
+    "strictCountySponsorshipMatch": true
+  },
+  "output": {
+    "studentName": "studentName",
+    "donorOrg": "donorOrg",
+    "donorName": "donorName",
+    "donorAddress": "donorAddress",
+    "donation": "donation",
+    "reason": "reason"
   }
 }

@@ -5,11 +5,13 @@ import org.hobynye.thankyoumatcher.model.*;
 import org.hobynye.thankyoumatcher.rules.RuleEngine;
 import org.hobynye.thankyoumatcher.solver.AssignmentSolver;
 import org.hobynye.thankyoumatcher.solver.SolverResult;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Service
 public class MatchingEngine {
     private final RuleEngine ruleEngine = new RuleEngine();
     private final ThankableValidator thankableValidator = new ThankableValidator();
@@ -63,12 +65,43 @@ public class MatchingEngine {
         for (Thankable thankable : input) {
             int weight = Math.max(1, thankable.getWeight());
 
-            for (int i = 0; i < weight; i++) {
-                result.add(thankable);
+            for (int i = 1; i <= weight; i++) {
+                Thankable copy = copyThankable(thankable);
+
+                if (weight > 1) {
+                    copy.setId(thankable.getId() + "-" + i);
+                    copy.setDescription(thankable.getDescription());
+                }
+
+                copy.setWeight(1);
+                result.add(copy);
             }
         }
 
         return result;
+    }
+
+    private Thankable copyThankable(Thankable original) {
+        Thankable copy = new Thankable();
+
+        copy.setId(original.getId());
+        copy.setType(original.getType());
+        copy.setOrgName(original.getOrgName());
+        copy.setContactName(original.getContactName());
+        copy.setAddress(original.getAddress());
+        copy.setDescription(original.getDescription());
+
+        copy.setEarmarked(original.isEarmarked());
+        copy.setSponsoredSchool(original.getSponsoredSchool());
+        copy.setSponsoredCounty(original.getSponsoredCounty());
+        copy.setSponsoredJStaff(original.getSponsoredJStaff());
+
+        copy.setStaffColor(original.getStaffColor());
+        copy.setStaffGroup(original.getStaffGroup());
+
+        copy.setWeight(original.getWeight());
+
+        return copy;
     }
 
     private boolean hasSponsoredJuniorStaff(Thankable thankable) {
