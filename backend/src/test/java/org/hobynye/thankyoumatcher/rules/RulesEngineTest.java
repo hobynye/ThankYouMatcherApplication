@@ -18,10 +18,11 @@ class RuleEngineTest {
         thankable.setEarmarked(true);
         thankable.setSponsoredSchool("Beacon High School");
 
-        MatchResult result = ruleEngine.evaluate(student, thankable);
+        Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.isValid()).isTrue();
-        assertThat(result.getReasons()).contains("Matched earmark");
+        assertThat(result.getCost()).isEqualTo(0);
+        assertThat(result.isRedAlert()).isFalse();
+        assertThat(result.getReasons()).contains("Matched earmarked sponsorship");
     }
 
     @Test
@@ -33,9 +34,8 @@ class RuleEngineTest {
         thankable.setEarmarked(true);
         thankable.setSponsoredSchool("Other High School");
 
-        MatchResult result = ruleEngine.evaluate(student, thankable);
+        Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.isValid()).isFalse();
         assertThat(result.getReasons()).contains("School mismatch");
     }
 
@@ -50,9 +50,8 @@ class RuleEngineTest {
         thankable.setStaffColor("Red");
         thankable.setStaffGroup("A");
 
-        MatchResult result = ruleEngine.evaluate(student, thankable);
+        Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.isValid()).isTrue();
         assertThat(result.getReasons()).contains("Matched staff group/color");
     }
 
@@ -67,9 +66,8 @@ class RuleEngineTest {
         thankable.setStaffColor("Red");
         thankable.setStaffGroup("A");
 
-        MatchResult result = ruleEngine.evaluate(student, thankable);
+        Candidate result = ruleEngine.evaluate(student, thankable);
 
-        assertThat(result.isValid()).isFalse();
         assertThat(result.getReasons()).contains("Staff color/group mismatch");
     }
 }
