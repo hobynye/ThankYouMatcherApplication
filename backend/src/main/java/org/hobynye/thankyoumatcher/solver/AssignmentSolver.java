@@ -1,10 +1,22 @@
 package org.hobynye.thankyoumatcher.solver;
 
-import org.hobynye.thankyoumatcher.model.*;
+import org.hobynye.thankyoumatcher.model.Assignment;
+import org.hobynye.thankyoumatcher.model.Candidate;
+import org.hobynye.thankyoumatcher.model.MatchingError;
+import org.hobynye.thankyoumatcher.model.MatchingErrorType;
+import org.hobynye.thankyoumatcher.model.Student;
+import org.hobynye.thankyoumatcher.model.Thankable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class AssignmentSolver {
+
+    private static final int PREFERRED_ASSIGNMENTS_PER_STUDENT = 2;
 
     public SolverResult solve(
             Map<Thankable, List<Candidate>> candidateMap,
@@ -15,29 +27,55 @@ public class AssignmentSolver {
         int source = 0;
         int thankableStart = 1;
         int studentStart = thankableStart + thankables.size();
-        int sink = studentStart + students.size();
+        int studentPreferenceStart = studentStart + students.size();
+        int sink = studentPreferenceStart + students.size();
         int nodeCount = sink + 1;
 
-        MaxFlowSolver flowSolver = new MaxFlowSolver(nodeCount);
+        MinCostMaxFlowSolver flowSolver = new MinCostMaxFlowSolver(nodeCount);
 
         Map<Thankable, Integer> thankableNodeMap = new HashMap<>();
         Map<Student, Integer> studentNodeMap = new HashMap<>();
         Map<String, Candidate> candidateLookup = new HashMap<>();
 
-        int studentCapacity = calculateStudentCapacity(students.size(), thankables.size());
+        int maxStudentCapacity = calculateStudentCapacity(students.size(), thankables.size());
 
         for (int i = 0; i < thankables.size(); i++) {
             Thankable thankable = thankables.get(i);
             int thankableNode = thankableStart + i;
+
             thankableNodeMap.put(thankable, thankableNode);
-            flowSolver.addEdge(source, thankableNode, 1);
+            flowSolver.addEdge(source, thankableNode, 1, 0);
         }
 
         for (int i = 0; i < students.size(); i++) {
             Student student = students.get(i);
+
             int studentNode = studentStart + i;
+            int preferenceNode = studentPreferenceStart + i;
+
             studentNodeMap.put(student, studentNode);
-            flowSolver.addEdge(studentNode, sink, studentCapacity);
+
+            /*
+             * First two assignments are cheap.
+             * Assignments beyond two are allowed, but more expensive.
+             */
+            int preferredCapacity = Math.min(
+                    PREFERRED_ASSIGNMENTS_PER_STUDENT,
+                    maxStudentCapacity
+            );
+
+            int extraCapacity = Math.max(
+                    0,
+                    maxStudentCapacity - preferredCapacity
+            );
+
+            flowSolver.addEdge(studentNode, preferenceNode, preferredCapacity, 0);
+
+            if (extraCapacity > 0) {
+                flowSolver.addEdge(studentNode, preferenceNode, extraCapacity, 10);
+            }
+
+            flowSolver.addEdge(preferenceNode, sink, maxStudentCapacity, 0);
         }
 
         for (Thankable thankable : thankables) {
@@ -47,12 +85,12 @@ public class AssignmentSolver {
                 Student student = candidate.getStudent();
                 int studentNode = studentNodeMap.get(student);
 
-                flowSolver.addEdge(thankableNode, studentNode, 1);
+                flowSolver.addEdge(thankableNode, studentNode, 1, 0);
                 candidateLookup.put(key(thankableNode, studentNode), candidate);
             }
         }
 
-        flowSolver.maxFlow(source, sink);
+        flowSolver.minCostMaxFlow(source, sink);
 
         List<Assignment> assignments = new ArrayList<>();
         Set<Thankable> matchedThankables = new HashSet<>();
@@ -60,7 +98,7 @@ public class AssignmentSolver {
         for (Thankable thankable : thankables) {
             int thankableNode = thankableNodeMap.get(thankable);
 
-            for (FlowEdge edge : flowSolver.getEdgesFrom(thankableNode)) {
+            for (CostFlowEdge edge : flowSolver.getEdgesFrom(thankableNode)) {
                 if (edge.getFlow() > 0) {
                     Candidate candidate = candidateLookup.get(key(thankableNode, edge.getTo()));
 

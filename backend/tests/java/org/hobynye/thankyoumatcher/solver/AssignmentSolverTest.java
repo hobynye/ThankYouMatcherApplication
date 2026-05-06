@@ -101,4 +101,31 @@ class AssignmentSolverTest {
         thankable.setAddress("123 Main Street");
         return thankable;
     }
+
+    @Test
+    void prefersGivingStudentsTwoAssignmentsBeforeGivingAnotherStudentAThird() {
+        Student s1 = student("Amanda", "Smith");
+        Student s2 = student("Tim", "Walshjamin");
+
+        Thankable t1 = thankable("D1");
+        Thankable t2 = thankable("D2");
+        Thankable t3 = thankable("D3");
+        Thankable t4 = thankable("D4");
+
+        Map<Thankable, List<Candidate>> candidates = Map.of(
+                t1, List.of(new Candidate(s1, t1, List.of("Valid"))),
+                t2, List.of(new Candidate(s1, t2, List.of("Valid"))),
+                t3, List.of(
+                        new Candidate(s1, t3, List.of("Valid")),
+                        new Candidate(s2, t3, List.of("Valid"))
+                ),
+                t4, List.of(new Candidate(s2, t4, List.of("Valid")))
+        );
+
+        SolverResult result = solver.solve(candidates, List.of(s1, s2));
+
+        assertThat(result.getAssignments()).hasSize(4);
+        assertThat(s1.getAssignedCount()).isEqualTo(2);
+        assertThat(s2.getAssignedCount()).isEqualTo(2);
+    }
 }
