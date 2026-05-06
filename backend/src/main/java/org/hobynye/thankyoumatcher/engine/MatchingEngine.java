@@ -47,6 +47,18 @@ public class MatchingEngine {
         SolverResult solverResult = solver.solve(candidates, students);
 
         errors.addAll(solverResult.getErrors());
+
+        for (Assignment assignment : solverResult.getAssignments()) {
+            if (assignment.isRedAlert()) {
+                errors.add(new MatchingError(
+                        MatchingErrorType.EARMARKED_FALLBACK_USED,
+                        assignment.getThankable().getId(),
+                        studentName(assignment.getStudent()),
+                        assignment.getAlertMessage()
+                ));
+            }
+        }
+
         errors.addAll(minimumThankYouProcessor.validateMinimums(
                 students,
                 configuration.getRules().getMinimumThankYousPerStudent()
@@ -115,5 +127,17 @@ public class MatchingEngine {
                 thankable,
                 "Assigned to Junior Staff: " + thankable.getSponsoredJStaff()
         );
+    }
+
+    private String studentName(Student student) {
+        if (student == null) {
+            return null;
+        }
+
+        return (value(student.getFirstName()) + " " + value(student.getLastName())).trim();
+    }
+
+    private String value(String value) {
+        return value == null ? "" : value;
     }
 }
