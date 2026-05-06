@@ -39,18 +39,42 @@ public class DonorInfoExcelParser {
     ) {
         List<Thankable> thankables = new ArrayList<>();
 
-        thankables.addAll(parseDonations(workbook, configuration));
+        thankables.addAll(parseDonationSheet(
+                workbook,
+                configuration,
+                configuration.getSheets().getDonations(),
+                "DONATION",
+                "Monetary donation"
+        ));
+
+        thankables.addAll(parseDonationSheet(
+                workbook,
+                configuration,
+                configuration.getSheets().getGiftInKind(),
+                "GIFT_IN_KIND",
+                "Gift-in-kind donation"
+        ));
+
+        thankables.addAll(parseDonationSheet(
+                workbook,
+                configuration,
+                configuration.getSheets().getGiftCards(),
+                "GIFT_CARD",
+                "Gift card donation"
+        ));
         thankables.addAll(parseStaff(workbook, configuration));
         thankables.addAll(parseSpeakers(workbook, configuration));
 
         return thankables;
     }
 
-    private List<Thankable> parseDonations(
+    private List<Thankable> parseDonationSheet(
             Workbook workbook,
-            MatcherConfiguration configuration
+            MatcherConfiguration configuration,
+            String sheetName,
+            String idPrefix,
+            String defaultDescription
     ) {
-        String sheetName = configuration.getSheets().getDonations();
         Sheet sheet = ExcelUtils.requireSheet(workbook, sheetName);
 
         DonationColumnConfiguration columns = configuration.getColumns().getDonation();
@@ -77,7 +101,7 @@ public class DonorInfoExcelParser {
             }
 
             Thankable thankable = new Thankable();
-            thankable.setId("DONATION-" + rowIndex);
+            thankable.setId(idPrefix + "-" + rowIndex);
             thankable.setType(ThankableType.DONATION);
 
             thankable.setOrgName(ExcelUtils.readString(row, orgCol));
@@ -100,7 +124,12 @@ public class DonorInfoExcelParser {
             String amount = amountCol == null ? null : ExcelUtils.readString(row, amountCol);
             String configuredDescription = descriptionCol == null ? null : ExcelUtils.readString(row, descriptionCol);
 
-            thankable.setDescription(buildDonationDescription(amount, configuredDescription));
+            thankable.setDescription(buildDonationDescription(
+                    amount,
+                    configuredDescription,
+                    defaultDescription
+            ));
+
             thankable.setWeight(readWeight(row, weightCol));
 
             thankables.add(thankable);
@@ -282,16 +311,21 @@ public class DonorInfoExcelParser {
         }
     }
 
-    private String buildDonationDescription(String amount, String configuredDescription) {
+    private String buildDonationDescription(
+            String amount,
+            String configuredDescription,
+            String defaultDescription
+    )
+    {
         if (configuredDescription != null && !configuredDescription.isBlank()) {
             return configuredDescription;
         }
 
         if (amount != null && !amount.isBlank()) {
-            return "Monetary donation of " + amount;
+            return defaultDescription + " of " + amount;
         }
 
-        return "Donation";
+        return defaultDescription;
     }
 
     private String buildStaffDescription(String color, String group, String role) {
