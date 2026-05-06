@@ -1,0 +1,8 @@
+package org.hobynye.thankyoumatcher.model;
+
+public enum MatchingErrorType {
+    NO_VALID_STUDENT_MATCH,
+    MISSING_DONOR_ADDRESS,
+    MISSING_DONOR_NAME,
+    MINIMUM_THANK_YOUS_NOT_MET
+}

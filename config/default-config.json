@@ -1,0 +1,36 @@
+{
+  "files": {
+    "donorFile": "2026 Income.xlsx",
+    "studentFile": "students.xlsx"
+  },
+  "sheets": {
+    "donations": "Donations",
+    "giftInKind": "Gift in Kind",
+    "giftCards": "Gift Cards",
+    "staff": "Staff",
+    "speakers": "Speakers"
+  },
+  "columns": {
+    "student": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "school": "School Name",
+      "color": "Color",
+      "group": "Group"
+    },
+    "donation": {
+      "orgName": "Organization",
+      "contactName": "Name",
+      "address": "Address",
+      "earmarked": "Earmarked Donation?",
+      "school": "Sponsored School",
+      "county": "Sponsored County",
+      "jstaff": "Sponsored JStaff",
+      "amount": "Amount"
+    }
+  },
+  "rules": {
+    "minThankYousPerStudent": 2,
+    "balanceAssignments": true
+  }
+}
