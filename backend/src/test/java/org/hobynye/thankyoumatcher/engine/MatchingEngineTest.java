@@ -207,4 +207,86 @@ class MatchingEngineTest {
 
         return configuration;
     }
+
+    @Test
+    void redAlertExplainsWhenNoMatchingStudentExistsForEarmark() {
+        Student nonMatchingStudent = student("Samantha", "Gratton");
+        nonMatchingStudent.setSchool("Hoosic Valley Jr./Sr. High School");
+
+        Thankable donor = thankable("D1");
+        donor.setOrgName("Peru Lions Club");
+        donor.setEarmarked(true);
+        donor.setSponsoredSchool("Peru Sr. High School");
+
+        MatchingResult result = engine.run(
+                List.of(nonMatchingStudent),
+                List.of(donor),
+                configuration()
+        );
+
+        assertThat(result.getAssignments()).hasSize(1);
+
+        Assignment assignment = result.getAssignments().get(0);
+
+        assertThat(assignment.isRedAlert()).isTrue();
+        assertThat(assignment.getAlertMessage())
+                .contains("no student matched the required school/county")
+                .contains("Peru Sr. High School")
+                .contains("Samantha Gratton")
+                .contains("Hoosic Valley Jr./Sr. High School");
+
+        assertThat(result.getErrors())
+                .anySatisfy(error -> {
+                    assertThat(error.getType()).isEqualTo(MatchingErrorType.EARMARKED_FALLBACK_USED);
+                    assertThat(error.getMessage()).contains("no student matched the required school/county");
+                });
+    }
+
+    @Test
+    void redAlertExplainsWhenMatchingStudentsExistButNotEnoughUniqueStudentsForOrganization() {
+        Student peruStudent = student("Emma", "Sprague");
+        peruStudent.setSchool("Peru Sr. High School");
+
+        Student fallbackStudent = student("Samantha", "Gratton");
+        fallbackStudent.setSchool("Hoosic Valley Jr./Sr. High School");
+
+        Thankable donor1 = thankable("D1");
+        donor1.setOrgName("Peru Lions Club");
+        donor1.setEarmarked(true);
+        donor1.setSponsoredSchool("Peru Sr. High School");
+
+        Thankable donor2 = thankable("D2");
+        donor2.setOrgName("Peru Lions Club");
+        donor2.setEarmarked(true);
+        donor2.setSponsoredSchool("Peru Sr. High School");
+
+        MatchingResult result = engine.run(
+                List.of(peruStudent, fallbackStudent),
+                List.of(donor1, donor2),
+                configuration()
+        );
+
+        assertThat(result.getAssignments()).hasSize(2);
+
+        Assignment redAlertAssignment = result.getAssignments().stream()
+                .filter(Assignment::isRedAlert)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(redAlertAssignment.getStudent()).isEqualTo(fallbackStudent);
+
+        assertThat(redAlertAssignment.getAlertMessage())
+                .contains("matching students exist")
+                .contains("not enough unique eligible students")
+                .contains("Peru Sr. High School")
+                .contains("Matching eligible students found: 1")
+                .contains("Samantha Gratton")
+                .contains("Hoosic Valley Jr./Sr. High School");
+
+        assertThat(result.getErrors())
+                .anySatisfy(error -> {
+                    assertThat(error.getType()).isEqualTo(MatchingErrorType.EARMARKED_FALLBACK_USED);
+                    assertThat(error.getMessage()).contains("not enough unique eligible students");
+                });
+    }
 }
