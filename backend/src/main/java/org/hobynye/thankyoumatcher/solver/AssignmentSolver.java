@@ -1,22 +1,13 @@
 package org.hobynye.thankyoumatcher.solver;
 
-import org.hobynye.thankyoumatcher.model.Assignment;
-import org.hobynye.thankyoumatcher.model.Candidate;
-import org.hobynye.thankyoumatcher.model.MatchingError;
-import org.hobynye.thankyoumatcher.model.MatchingErrorType;
-import org.hobynye.thankyoumatcher.model.Student;
-import org.hobynye.thankyoumatcher.model.Thankable;
+import org.hobynye.thankyoumatcher.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AssignmentSolver {
 
     private static final int PREFERRED_ASSIGNMENTS_PER_STUDENT = 2;
+    private static final int EXTRA_ASSIGNMENT_COST = 10;
 
     public SolverResult solve(
             Map<Thankable, List<Candidate>> candidateMap,
@@ -26,7 +17,20 @@ public class AssignmentSolver {
 
         int source = 0;
         int thankableStart = 1;
-        int studentStart = thankableStart + thankables.size();
+
+        Map<Student, Integer> studentIndexMap = new HashMap<>();
+        for (int i = 0; i < students.size(); i++) {
+            studentIndexMap.put(students.get(i), i);
+        }
+
+        Map<StudentOrgKey, Integer> studentOrgPairNodeMap = buildStudentOrgPairNodes(
+                candidateMap,
+                studentIndexMap,
+                thankableStart + thankables.size()
+        );
+
+        int pairStart = thankableStart + thankables.size();
+        int studentStart = pairStart + studentOrgPairNodeMap.size();
         int studentPreferenceStart = studentStart + students.size();
         int sink = studentPreferenceStart + students.size();
         int nodeCount = sink + 1;
@@ -55,10 +59,6 @@ public class AssignmentSolver {
 
             studentNodeMap.put(student, studentNode);
 
-            /*
-             * First two assignments are cheap.
-             * Assignments beyond two are allowed, but more expensive.
-             */
             int preferredCapacity = Math.min(
                     PREFERRED_ASSIGNMENTS_PER_STUDENT,
                     maxStudentCapacity
@@ -72,10 +72,24 @@ public class AssignmentSolver {
             flowSolver.addEdge(studentNode, preferenceNode, preferredCapacity, 0);
 
             if (extraCapacity > 0) {
-                flowSolver.addEdge(studentNode, preferenceNode, extraCapacity, 10);
+                flowSolver.addEdge(studentNode, preferenceNode, extraCapacity, EXTRA_ASSIGNMENT_COST);
             }
 
             flowSolver.addEdge(preferenceNode, sink, maxStudentCapacity, 0);
+        }
+
+        for (Map.Entry<StudentOrgKey, Integer> entry : studentOrgPairNodeMap.entrySet()) {
+            StudentOrgKey key = entry.getKey();
+            int pairNode = entry.getValue();
+            Student student = students.get(key.studentIndex());
+
+            int studentNode = studentNodeMap.get(student);
+
+            /*
+             * This enforces:
+             * one student should not write more than one letter to the same organization.
+             */
+            flowSolver.addEdge(pairNode, studentNode, 1, 0);
         }
 
         for (Thankable thankable : thankables) {
@@ -83,15 +97,27 @@ public class AssignmentSolver {
 
             for (Candidate candidate : candidateMap.getOrDefault(thankable, List.of())) {
                 Student student = candidate.getStudent();
-                int studentNode = studentNodeMap.get(student);
+                Integer studentIndex = studentIndexMap.get(student);
+
+                if (studentIndex == null) {
+                    continue;
+                }
+
+                StudentOrgKey pairKey = new StudentOrgKey(
+                        studentIndex,
+                        donorKey(thankable)
+                );
+
+                int pairNode = studentOrgPairNodeMap.get(pairKey);
 
                 flowSolver.addEdge(
                         thankableNode,
-                        studentNode,
+                        pairNode,
                         1,
                         candidate.getCost()
                 );
-                candidateLookup.put(key(thankableNode, studentNode), candidate);
+
+                candidateLookup.put(key(thankableNode, pairNode), candidate);
             }
         }
 
@@ -141,15 +167,75 @@ public class AssignmentSolver {
         return new SolverResult(assignments, unmatched, errors);
     }
 
+    private Map<StudentOrgKey, Integer> buildStudentOrgPairNodes(
+            Map<Thankable, List<Candidate>> candidateMap,
+            Map<Student, Integer> studentIndexMap,
+            int startingNode
+    ) {
+        Map<StudentOrgKey, Integer> result = new HashMap<>();
+        int nextNode = startingNode;
+
+        for (Map.Entry<Thankable, List<Candidate>> entry : candidateMap.entrySet()) {
+            Thankable thankable = entry.getKey();
+            String donorKey = donorKey(thankable);
+
+            for (Candidate candidate : entry.getValue()) {
+                Integer studentIndex = studentIndexMap.get(candidate.getStudent());
+
+                if (studentIndex == null) {
+                    continue;
+                }
+
+                StudentOrgKey key = new StudentOrgKey(studentIndex, donorKey);
+
+                if (!result.containsKey(key)) {
+                    result.put(key, nextNode++);
+                }
+            }
+        }
+
+        return result;
+    }
+
     private int calculateStudentCapacity(int studentCount, int thankableCount) {
         if (studentCount == 0) {
             return 0;
         }
 
-        return (int) Math.ceil((double) thankableCount / studentCount);
+        /*
+         * Do not cap students at the average.
+         * Earmarked donations may require one matching student to receive
+         * a 2nd, 3rd, or later assignment.
+         *
+         * Balance is handled by cost, not by hard capacity.
+         */
+        return thankableCount;
     }
 
-    private String key(int thankableNode, int studentNode) {
-        return thankableNode + "->" + studentNode;
+    private String donorKey(Thankable thankable) {
+        String orgName = normalize(thankable.getOrgName());
+
+        if (!orgName.isBlank()) {
+            return "ORG:" + orgName;
+        }
+
+        String contactName = normalize(thankable.getContactName());
+
+        if (!contactName.isBlank()) {
+            return "CONTACT:" + contactName;
+        }
+
+        return "THANKABLE:" + normalize(thankable.getId());
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
+    }
+
+    private String key(int thankableNode, int pairNode) {
+        return thankableNode + "->" + pairNode;
+    }
+
+    private record StudentOrgKey(int studentIndex, String donorKey) {
     }
 }

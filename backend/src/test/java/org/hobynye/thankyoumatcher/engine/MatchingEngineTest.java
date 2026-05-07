@@ -65,6 +65,117 @@ class MatchingEngineTest {
                 .contains(MatchingErrorType.MINIMUM_THANK_YOUS_NOT_MET);
     }
 
+    @Test
+    void assignsMultipleEarmarkedDonorsToMatchingStudentEvenWhenCapacityWouldOtherwiseLimitThem() {
+        Student hoosickStudent = student("Emma", "Sprague");
+        hoosickStudent.setSchool("Hoosick Falls Central School");
+
+        Student fortAnnStudent = student("Sean", "Havens");
+        fortAnnStudent.setSchool("Fort Ann Central School");
+
+        Student otherStudent = student("Other", "Student");
+        otherStudent.setSchool("Other School");
+
+        Thankable donor1 = thankable("D1");
+        donor1.setOrgName("Town of Hoosick Lions Club");
+        donor1.setEarmarked(true);
+        donor1.setSponsoredSchool("Hoosick Falls Central School");
+
+        Thankable donor2 = thankable("D2");
+        donor2.setOrgName("Hoosick Business Association");
+        donor2.setEarmarked(true);
+        donor2.setSponsoredSchool("Hoosick Falls Central School");
+
+        MatchingResult result = engine.run(
+                List.of(hoosickStudent, fortAnnStudent, otherStudent),
+                List.of(donor1, donor2),
+                configuration()
+        );
+
+        assertThat(result.getAssignments()).hasSize(2);
+
+        assertThat(result.getAssignments())
+                .allSatisfy(assignment -> {
+                    assertThat(assignment.getStudent().getSchool())
+                            .isEqualTo("Hoosick Falls Central School");
+                    assertThat(assignment.isRedAlert()).isFalse();
+                });
+    }
+
+    @Test
+    void distributesEarmarkedDonorsAcrossMatchingStudentsWithFewestLetters() {
+        Student hoosickStudent1 = student("Emma", "Sprague");
+        hoosickStudent1.setSchool("Hoosick Falls Central School");
+
+        Student hoosickStudent2 = student("Alex", "Rivera");
+        hoosickStudent2.setSchool("Hoosick Falls Central School");
+
+        Student fortAnnStudent = student("Sean", "Havens");
+        fortAnnStudent.setSchool("Fort Ann Central School");
+
+        Thankable donor1 = thankable("D1");
+        donor1.setOrgName("Hoosick Org 1");
+        donor1.setEarmarked(true);
+        donor1.setSponsoredSchool("Hoosick Falls Central School");
+
+        Thankable donor2 = thankable("D2");
+        donor2.setOrgName("Hoosick Org 2");
+        donor2.setEarmarked(true);
+        donor2.setSponsoredSchool("Hoosick Falls Central School");
+
+        MatchingResult result = engine.run(
+                List.of(hoosickStudent1, hoosickStudent2, fortAnnStudent),
+                List.of(donor1, donor2),
+                configuration()
+        );
+
+        assertThat(result.getAssignments()).hasSize(2);
+
+        assertThat(hoosickStudent1.getAssignedCount()).isEqualTo(1);
+        assertThat(hoosickStudent2.getAssignedCount()).isEqualTo(1);
+        assertThat(fortAnnStudent.getAssignedCount()).isEqualTo(0);
+
+        assertThat(result.getAssignments())
+                .allSatisfy(assignment -> assertThat(assignment.isRedAlert()).isFalse());
+    }
+
+    @Test
+    void doesNotAssignSameStudentMultipleLettersToSameOrganizationWhenAnotherMatchingStudentExists() {
+        Student hoosickStudent1 = student("Emma", "Sprague");
+        hoosickStudent1.setSchool("Hoosick Falls Central School");
+
+        Student hoosickStudent2 = student("Alex", "Rivera");
+        hoosickStudent2.setSchool("Hoosick Falls Central School");
+
+        Thankable donor1 = thankable("D1");
+        donor1.setOrgName("Town of Hoosick Lions Club");
+        donor1.setEarmarked(true);
+        donor1.setSponsoredSchool("Hoosick Falls Central School");
+
+        Thankable donor2 = thankable("D2");
+        donor2.setOrgName("Town of Hoosick Lions Club");
+        donor2.setEarmarked(true);
+        donor2.setSponsoredSchool("Hoosick Falls Central School");
+
+        MatchingResult result = engine.run(
+                List.of(hoosickStudent1, hoosickStudent2),
+                List.of(donor1, donor2),
+                configuration()
+        );
+
+        assertThat(result.getAssignments()).hasSize(2);
+
+        assertThat(hoosickStudent1.getAssignedCount()).isEqualTo(1);
+        assertThat(hoosickStudent2.getAssignedCount()).isEqualTo(1);
+
+        assertThat(result.getAssignments())
+                .allSatisfy(assignment -> {
+                    assertThat(assignment.getStudent().getSchool())
+                            .isEqualTo("Hoosick Falls Central School");
+                    assertThat(assignment.isRedAlert()).isFalse();
+                });
+    }
+
     private Student student(String firstName, String lastName) {
         Student student = new Student();
         student.setFirstName(firstName);
