@@ -71,6 +71,8 @@ class DonorInfoExcelParserTest {
         Workbook workbook = new XSSFWorkbook();
 
         createDonationSheet(workbook);
+        createGiftInKindSheet(workbook);
+        createGiftCardsSheet(workbook);
         createStaffSheet(workbook);
         createSpeakerSheet(workbook);
 
@@ -172,6 +174,8 @@ class DonorInfoExcelParserTest {
 
         SheetConfiguration sheets = new SheetConfiguration();
         sheets.setDonations("Donations");
+        sheets.setGiftInKind("Gift in Kind");
+        sheets.setGiftCards("Gift Cards");
         sheets.setStaff("Staff");
         sheets.setSpeakers("Speakers");
 
@@ -224,5 +228,32 @@ class DonorInfoExcelParserTest {
         configuration.setColumns(columns);
 
         return configuration;
+    }
+
+    private void createGiftInKindSheet(Workbook workbook) {
+        createEmptyDonationLikeSheet(workbook, "Gift in Kind");
+    }
+
+    private void createGiftCardsSheet(Workbook workbook) {
+        createEmptyDonationLikeSheet(workbook, "Gift Cards");
+    }
+
+    private void createEmptyDonationLikeSheet(Workbook workbook, String sheetName) {
+        Sheet sheet = workbook.createSheet(sheetName);
+
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("Organization");
+        header.createCell(1).setCellValue("Name");
+        header.createCell(2).setCellValue("Street");
+        header.createCell(3).setCellValue("City");
+        header.createCell(4).setCellValue("State");
+        header.createCell(5).setCellValue("Zip");
+        header.createCell(6).setCellValue("Amount");
+        header.createCell(7).setCellValue("Description");
+        header.createCell(8).setCellValue("Earmarked Donation?");
+        header.createCell(9).setCellValue("Sponsored School");
+        header.createCell(10).setCellValue("Sponsored County");
+        header.createCell(11).setCellValue("Sponsored JStaff");
+        header.createCell(12).setCellValue("Weight");
     }
 }

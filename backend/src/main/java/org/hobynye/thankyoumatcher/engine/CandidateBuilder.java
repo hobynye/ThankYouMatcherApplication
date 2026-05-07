@@ -33,10 +33,8 @@ public class CandidateBuilder {
             List<Candidate> candidates = new ArrayList<>();
 
             for (Student s : students) {
-                MatchResult match = ruleEngine.evaluate(s, t);
-                if (match.isValid()) {
-                    candidates.add(new Candidate(s, t, match.getReasons()));
-                }
+                Candidate candidate = ruleEngine.evaluate(s, t);
+                candidates.add(candidate);
             }
 
             result.put(t, candidates);

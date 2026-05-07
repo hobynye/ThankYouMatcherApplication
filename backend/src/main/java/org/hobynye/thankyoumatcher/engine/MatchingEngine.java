@@ -28,6 +28,12 @@ public class MatchingEngine {
 
         List<Thankable> expanded = expandWeights(thankables);
 
+        errors.addAll(validateSufficientAssignments(
+                students,
+                expanded,
+                configuration.getRules().getMinimumThankYousPerStudent()
+        ));
+
         List<Assignment> juniorStaffAssignments = new ArrayList<>();
         List<Thankable> remaining = new ArrayList<>();
 
@@ -45,8 +51,21 @@ public class MatchingEngine {
 
         AssignmentSolver solver = new AssignmentSolver();
         SolverResult solverResult = solver.solve(candidates, students);
+        enrichRedAlertMessages(solverResult.getAssignments(), students);
 
         errors.addAll(solverResult.getErrors());
+
+        for (Assignment assignment : solverResult.getAssignments()) {
+            if (assignment.isRedAlert()) {
+                errors.add(new MatchingError(
+                        MatchingErrorType.EARMARKED_FALLBACK_USED,
+                        assignment.getThankable().getId(),
+                        studentName(assignment.getStudent()),
+                        assignment.getAlertMessage()
+                ));
+            }
+        }
+
         errors.addAll(minimumThankYouProcessor.validateMinimums(
                 students,
                 configuration.getRules().getMinimumThankYousPerStudent()
@@ -115,5 +134,124 @@ public class MatchingEngine {
                 thankable,
                 "Assigned to Junior Staff: " + thankable.getSponsoredJStaff()
         );
+    }
+
+    private String studentName(Student student) {
+        if (student == null) {
+            return null;
+        }
+
+        return (value(student.getFirstName()) + " " + value(student.getLastName())).trim();
+    }
+
+    private String value(String value) {
+        return value == null ? "" : value;
+    }
+
+    private void enrichRedAlertMessages(
+            List<Assignment> assignments,
+            List<Student> students
+    ) {
+        for (Assignment assignment : assignments) {
+            if (!assignment.isRedAlert()) {
+                continue;
+            }
+
+            Thankable thankable = assignment.getThankable();
+
+            if (!thankable.isEarmarked()) {
+                continue;
+            }
+
+            List<Student> matchingStudents = students.stream()
+                    .filter(student -> matchesEarmark(student, thankable))
+                    .toList();
+
+            String assignedStudentName = studentName(assignment.getStudent());
+            String assignedSchool = value(assignment.getStudent().getSchool());
+            String assignedCounty = value(assignment.getStudent().getCounty());
+
+            if (matchingStudents.isEmpty()) {
+                assignment.setAlertMessage(
+                        "RED ALERT: This donor had an earmarked sponsorship, but no student matched the required school/county. "
+                                + "Expected school/county: "
+                                + value(thankable.getSponsoredSchool())
+                                + " / "
+                                + value(thankable.getSponsoredCounty())
+                                + ". Assigned fallback student: "
+                                + assignedStudentName
+                                + " from "
+                                + assignedSchool
+                                + " / "
+                                + assignedCounty
+                                + "."
+                );
+            } else {
+                assignment.setAlertMessage(
+                        "RED ALERT: This donor had an earmarked sponsorship and matching students exist, "
+                                + "but there were not enough unique eligible students available who were not already assigned to this organization. "
+                                + "Expected school/county: "
+                                + value(thankable.getSponsoredSchool())
+                                + " / "
+                                + value(thankable.getSponsoredCounty())
+                                + ". Matching eligible students found: "
+                                + matchingStudents.size()
+                                + ". Assigned fallback student: "
+                                + assignedStudentName
+                                + " from "
+                                + assignedSchool
+                                + " / "
+                                + assignedCounty
+                                + "."
+                );
+            }
+        }
+    }
+
+    private boolean matchesEarmark(Student student, Thankable thankable) {
+        boolean schoolRequired = thankable.getSponsoredSchool() != null
+                && !thankable.getSponsoredSchool().isBlank();
+
+        boolean countyRequired = thankable.getSponsoredCounty() != null
+                && !thankable.getSponsoredCounty().isBlank();
+
+        boolean schoolMatches = !schoolRequired
+                || equalsIgnoreCase(student.getSchool(), thankable.getSponsoredSchool());
+
+        boolean countyMatches = !countyRequired
+                || equalsIgnoreCase(student.getCounty(), thankable.getSponsoredCounty());
+
+        return schoolMatches && countyMatches;
+    }
+
+    private boolean equalsIgnoreCase(String a, String b) {
+        return a != null && b != null && a.equalsIgnoreCase(b);
+    }
+
+    private List<MatchingError> validateSufficientAssignments(
+            List<Student> students,
+            List<Thankable> expandedThankables,
+            int minimumThankYousPerStudent
+    ) {
+        int requiredAssignments = students.size() * minimumThankYousPerStudent;
+        int availableAssignments = expandedThankables.size();
+
+        if (availableAssignments >= requiredAssignments) {
+            return List.of();
+        }
+
+        int shortfall = requiredAssignments - availableAssignments;
+
+        return List.of(new MatchingError(
+                MatchingErrorType.INSUFFICIENT_ASSIGNMENTS_AVAILABLE,
+                null,
+                null,
+                "There are not enough available thank-you assignments to satisfy the configured minimum. "
+                        + "Students: " + students.size()
+                        + ". Minimum required per student: " + minimumThankYousPerStudent
+                        + ". Required assignments: " + requiredAssignments
+                        + ". Available weighted assignments: " + availableAssignments
+                        + ". Shortfall: " + shortfall + "."
+        ));
     }
 }
