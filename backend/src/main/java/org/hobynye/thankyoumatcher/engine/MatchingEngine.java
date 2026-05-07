@@ -28,6 +28,12 @@ public class MatchingEngine {
 
         List<Thankable> expanded = expandWeights(thankables);
 
+        errors.addAll(validateSufficientAssignments(
+                students,
+                expanded,
+                configuration.getRules().getMinimumThankYousPerStudent()
+        ));
+
         List<Assignment> juniorStaffAssignments = new ArrayList<>();
         List<Thankable> remaining = new ArrayList<>();
 
@@ -220,5 +226,32 @@ public class MatchingEngine {
 
     private boolean equalsIgnoreCase(String a, String b) {
         return a != null && b != null && a.equalsIgnoreCase(b);
+    }
+
+    private List<MatchingError> validateSufficientAssignments(
+            List<Student> students,
+            List<Thankable> expandedThankables,
+            int minimumThankYousPerStudent
+    ) {
+        int requiredAssignments = students.size() * minimumThankYousPerStudent;
+        int availableAssignments = expandedThankables.size();
+
+        if (availableAssignments >= requiredAssignments) {
+            return List.of();
+        }
+
+        int shortfall = requiredAssignments - availableAssignments;
+
+        return List.of(new MatchingError(
+                MatchingErrorType.INSUFFICIENT_ASSIGNMENTS_AVAILABLE,
+                null,
+                null,
+                "There are not enough available thank-you assignments to satisfy the configured minimum. "
+                        + "Students: " + students.size()
+                        + ". Minimum required per student: " + minimumThankYousPerStudent
+                        + ". Required assignments: " + requiredAssignments
+                        + ". Available weighted assignments: " + availableAssignments
+                        + ". Shortfall: " + shortfall + "."
+        ));
     }
 }

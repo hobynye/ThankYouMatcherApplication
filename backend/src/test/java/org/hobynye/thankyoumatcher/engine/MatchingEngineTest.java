@@ -289,4 +289,32 @@ class MatchingEngineTest {
                     assertThat(error.getMessage()).contains("not enough unique eligible students");
                 });
     }
+
+    @Test
+    void reportsInsufficientAssignmentsWhenThereAreNotEnoughWeightedThankables() {
+        Student s1 = student("Amanda", "Smith");
+        Student s2 = student("Tim", "Walshjamin");
+        Student s3 = student("Colin", "Walshjamin");
+
+        Thankable donor1 = thankable("D1");
+        Thankable donor2 = thankable("D2");
+
+        MatchingResult result = engine.run(
+                List.of(s1, s2, s3),
+                List.of(donor1, donor2),
+                configuration()
+        );
+
+        assertThat(result.getErrors())
+                .anySatisfy(error -> {
+                    assertThat(error.getType())
+                            .isEqualTo(MatchingErrorType.INSUFFICIENT_ASSIGNMENTS_AVAILABLE);
+                    assertThat(error.getMessage())
+                            .contains("Students: 3")
+                            .contains("Minimum required per student: 2")
+                            .contains("Required assignments: 6")
+                            .contains("Available weighted assignments: 2")
+                            .contains("Shortfall: 4");
+                });
+    }
 }
