@@ -78,7 +78,7 @@ export default function App() {
         setIsPreviewing(true);
 
         try {
-            const response = await fetch("http://localhost:8080/api/matching/preview", {
+            const response = await fetch("/api/matching/preview", {
                 method: "POST",
                 body: buildFormData(studentFile, donorInfoFile, configFile)
             });
@@ -278,7 +278,7 @@ export default function App() {
         setIsExporting(true);
 
         try {
-            const response = await fetch("http://localhost:8080/api/matching/export", {
+            const response = await fetch("/api/matching/export", {
                 method: "POST",
                 body: buildFormData(studentFile, donorInfoFile, configFile)
             });
