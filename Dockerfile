@@ -16,7 +16,7 @@ COPY --from=frontend-build /app/frontend/dist ./src/main/resources/static
 RUN mvn package -DskipTests -B
 
 # Stage 3: Minimal JRE runtime
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21.0.11_10-jre-alpine
 WORKDIR /app
 COPY --from=backend-build /app/backend/target/thank-you-matcher-1.0.0.jar app.jar
 EXPOSE 8080
