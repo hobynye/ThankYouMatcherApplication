@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Spring Boot JAR (with frontend baked in as static resources)
-FROM maven:3.9-eclipse-temurin-21-alpine AS backend-build
+FROM maven:3.10-eclipse-temurin-21-alpine AS backend-build
 WORKDIR /app/backend
 COPY backend/pom.xml ./
 RUN mvn dependency:go-offline -B
